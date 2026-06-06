@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D2B26" />
+      <stop offset="100%" stop-color="#1A1A19" />
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F39C12" />
+      <stop offset="100%" stop-color="#D35400" />
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1ABC9C" />
+      <stop offset="100%" stop-color="#16A085" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.3" />
+    </filter>
+  </defs>
+  
+  <!-- Solid Background spanning full canvas to support masking safely -->
+  <rect x="0" y="0" width="512" height="512" fill="url(#bgGrad)" />
+  
+  <!-- Maskable Safe Area Content (scaled down by 70% and centered: group translates to center) -->
+  <g transform="translate(76.8, 76.8) scale(0.7)">
+    <!-- Visual content identical to icon.svg but perfectly scaled within safe margins -->
+    <!-- LCD Screen Representation -->
+    <rect x="24" y="24" width="336" height="88" rx="20" fill="#141413" stroke="#ffffff" stroke-opacity="0.05" stroke-width="2" />
+    <path d="M 52 68 Q 60 48 84 56 Q 100 62 108 80" stroke="#E67E22" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.8" />
+    
+    <!-- C (Gray scale func) -->
+    <rect x="24" y="144" width="64" height="64" rx="16" fill="#DBD8D1" />
+    <text x="56" y="184" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="28" font-weight="bold" fill="#4A4945" text-anchor="middle">C</text>
+    
+    <!-- ( ) -->
+    <rect x="112" y="144" width="64" height="64" rx="16" fill="#4A4945" />
+    <text x="144" y="184" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="28" font-weight="bold" fill="#ECE9E2" text-anchor="middle">(</text>
+
+    <rect x="200" y="144" width="64" height="64" rx="16" fill="#4A4945" />
+    <text x="232" y="184" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="28" font-weight="bold" fill="#ECE9E2" text-anchor="middle">)</text>
+
+    <!-- Divide (Orange) -->
+    <rect x="288" y="144" width="64" height="64" rx="16" fill="url(#orangeGrad)" />
+    <text x="320" y="186" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="32" font-weight="bold" fill="#FFFFFF" text-anchor="middle">÷</text>
+
+    <!-- Digits -->
+    <rect x="24" y="232" width="64" height="64" rx="16" fill="#FFFFFF" stroke="#EBE8E3" stroke-width="1" />
+    <text x="56" y="272" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="28" font-weight="600" fill="#2C2B29" text-anchor="middle">7</text>
+
+    <rect x="112" y="232" width="64" height="64" rx="16" fill="#FFFFFF" stroke="#EBE8E3" stroke-width="1" />
+    <text x="144" y="272" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="28" font-weight="600" fill="#2C2B29" text-anchor="middle">8</text>
+
+    <rect x="200" y="232" width="64" height="64" rx="16" fill="#FFFFFF" stroke="#EBE8E3" stroke-width="1" />
+    <text x="232" y="272" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="28" font-weight="600" fill="#2C2B29" text-anchor="middle">9</text>
+
+    <!-- Multiply -->
+    <rect x="288" y="232" width="64" height="64" rx="16" fill="url(#orangeGrad)" />
+    <text x="320" y="274" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="30" font-weight="bold" fill="#FFFFFF" text-anchor="middle">×</text>
+
+    <!-- Equal (Emerald) -->
+    <rect x="288" y="320" width="64" height="64" rx="16" fill="url(#emeraldGrad)" />
+    <text x="320" y="362" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="32" font-weight="bold" fill="#FFFFFF" text-anchor="middle">=</text>
+    
+    <!-- Dots / Details -->
+    <rect x="24" y="320" width="64" height="64" rx="16" fill="#FFFFFF" stroke="#EBE8E3" stroke-width="1" />
+    <text x="56" y="360" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="28" font-weight="600" fill="#2C2B29" text-anchor="middle">0</text>
+    
+    <rect x="112" y="320" width="64" height="64" rx="16" fill="#FFFFFF" stroke="#EBE8E3" stroke-width="1" />
+    <text x="144" y="360" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="28" font-weight="600" fill="#2C2B29" text-anchor="middle">.</text>
+
+    <rect x="200" y="320" width="64" height="64" rx="16" fill="url(#orangeGrad)" />
+    <text x="232" y="360" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-size="28" font-weight="600" fill="#FFFFFF" text-anchor="middle">+</text>
+  </g>
+</svg>
