@@ -19,10 +19,1018 @@
     <!-- PWA Manifest link -->
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((reg) => {
+              console.log('Service Worker registered successfully with scope:', reg.scope);
+            })
+            .catch((err) => {
+              console.error('Service Worker registration failed:', err);
+            });
+        });
+      }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS v3/v4 Play CDN compiler -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+              mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- React and ReactDOM from CDN (React 18 is used because React 19 does not have UMD builds) -->
+    <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin></script>
+    
+    <!-- Babel Compiler for in-browser JSX parsing -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+      /* Smooth scrollbar styling and fine-grained styling constraints */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 99px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+      }
+    </style>
   </head>
   <body class="overscroll-none bg-[#FDFCF7]">
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+
+    <script type="text/babel">
+      const { useState, useEffect, useCallback, useRef } = React;
+
+      // ==========================================
+      // AUDIO SYNTHESIZER Click Effect
+      // ==========================================
+      const playTactileClick = () => {
+        try {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const osc = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+          
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(580, audioCtx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.04);
+          
+          gainNode.gain.setValueAtTime(0.04, audioCtx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+          
+          osc.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.05);
+        } catch (e) {
+          // Fallback silently if browser system permissions prevent early audio context
+        }
+      };
+
+      // ==========================================
+      // MATHEMATICAL RECURSIVE PARSER ENGINE
+      // ==========================================
+      function evaluateExpression(expr) {
+        const sanitized = expr
+          .replace(/×/g, '*')
+          .replace(/÷/g, '/')
+          .replace(/\s+/g, '');
+
+        if (!sanitized) return 0;
+        let index = 0;
+
+        function peek() {
+          return index < sanitized.length ? sanitized[index] : '';
+        }
+
+        function consume() {
+          return index < sanitized.length ? sanitized[index++] : '';
+        }
+
+        function parseExpression() {
+          let result = parseTerm();
+          while (true) {
+            const next = peek();
+            if (next === '+') {
+              consume();
+              result += parseTerm();
+            } else if (next === '-') {
+              consume();
+              result -= parseTerm();
+            } else {
+              break;
+            }
+          }
+          return result;
+        }
+
+        function parseTerm() {
+          let result = parseFactor();
+          while (true) {
+            const next = peek();
+            if (next === '*') {
+              consume();
+              result *= parseFactor();
+            } else if (next === '/') {
+              consume();
+              const divisor = parseFactor();
+              if (divisor === 0) {
+                throw new Error('Cannot divide by zero');
+              }
+              result /= divisor;
+            } else {
+              break;
+            }
+          }
+          return result;
+        }
+
+        function parseFactor() {
+          const next = peek();
+          if (next === '+') {
+            consume();
+            return parseFactor();
+          }
+          if (next === '-') {
+            consume();
+            return -parseFactor();
+          }
+          if (next === '(') {
+            consume(); // '('
+            const result = parseExpression();
+            if (peek() === ')') {
+              consume(); // ')'
+            } else {
+              throw new Error('Mismatched parenthesis');
+            }
+            return result;
+          }
+
+          let numStr = '';
+          while (/[0-9.]/.test(peek())) {
+            numStr += consume();
+          }
+
+          if (numStr === '') {
+            throw new Error('Expected number');
+          }
+
+          const value = parseFloat(numStr);
+          if (isNaN(value)) {
+            throw new Error('Invalid number');
+          }
+          return value;
+        }
+
+        const output = parseExpression();
+        if (index < sanitized.length) {
+          throw new Error('Syntax error');
+        }
+        return output;
+      }
+
+      function formatResult(value) {
+        if (isNaN(value)) return 'Error';
+        if (!isFinite(value)) return 'Infinity';
+        const fixed = value.toFixed(8);
+        if (fixed.includes('.')) {
+          return parseFloat(fixed).toString();
+        }
+        return value.toString();
+      }
+
+      // ==========================================
+      // INTEGRATED VECTOR EMBEDDED ICONS
+      // ==========================================
+      const CalculatorIcon = () => (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <rect x="4" y="2" width="16" height="20" rx="2" />
+          <line x1="8" y1="6" x2="16" y2="6" />
+          <line x1="16" y1="14" x2="16" y2="18" />
+          <circle cx="8" cy="11" r="1" />
+          <circle cx="12" cy="11" r="1" />
+          <circle cx="16" cy="11" r="1" />
+          <circle cx="8" cy="15" r="1" />
+          <circle cx="12" cy="15" r="1" />
+          <circle cx="8" cy="19" r="1" />
+          <circle cx="12" cy="19" r="1" />
+        </svg>
+      );
+
+      const KeyboardIcon = () => (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10" />
+        </svg>
+      );
+
+      const HistoryIcon = () => (
+        <svg className="w-4 h-4 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      );
+
+      const TrashIcon = () => (
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <polyline points="3 6 5 6 21 6" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          <line x1="10" y1="11" x2="10" y2="17" />
+          <line x1="14" y1="11" x2="14" y2="17" />
+        </svg>
+      );
+
+      const WifiIcon = () => (
+        <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" />
+        </svg>
+      );
+
+      const WifiOffIcon = () => (
+        <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M1.42 9a16 16 0 0 1 17.5-1.9M8.53 16.11a6 6 0 0 1 5.1-1.33" />
+        </svg>
+      );
+
+      const XIcon = () => (
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      );
+
+      const MonitorIcon = () => (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>
+      );
+
+      const DownloadIcon = () => (
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+        </svg>
+      );
+
+      const HelpCircleIcon = () => (
+        <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" />
+        </svg>
+      );
+
+      const DeleteIcon = () => (
+        <svg className="w-5 h-5 text-[#4A4945]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2zM18 9l-6 6M12 9l6 6" />
+        </svg>
+      );
+
+      // ==========================================
+      // COMPONENT: Display Panel
+      // ==========================================
+      function Display({ expression, displayValue, hasMemory, bracketCount }) {
+        return (
+          <div 
+            id="calculator-display"
+            className="w-full bg-[#1A1A19] text-white rounded-2xl p-6 mb-5 flex flex-col justify-end items-end relative overflow-hidden ring-1 ring-white/10 shadow-[inset_0_2px_8px_rgba(0,0,0,0.5)] h-36"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="absolute top-4 left-6 flex items-center gap-2">
+              {hasMemory && (
+                <span className="text-[10px] font-mono tracking-widest bg-yellow-500/15 text-yellow-400 px-2 py-0.5 rounded border border-yellow-500/20 animate-pulse">
+                  M
+                </span>
+              )}
+              {bracketCount > 0 && (
+                <span className="text-[10px] font-mono bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20">
+                  ( {bracketCount} )
+                </span>
+              )}
+            </div>
+
+            <div className="text-right text-[#A0A09A] font-mono text-sm tracking-tight mb-2 max-w-full overflow-x-auto whitespace-nowrap no-scrollbar h-6 flex items-center justify-end select-all">
+              <span>{expression || <span className="opacity-0">0</span>}</span>
+            </div>
+
+            <div className="w-full text-right font-mono font-medium tracking-tight text-3xl sm:text-4xl overflow-x-auto whitespace-nowrap no-scrollbar text-white select-all">
+              <span className="inline-block transition-transform duration-75">
+                {displayValue}
+              </span>
+            </div>
+          </div>
+        );
+      }
+
+      // ==========================================
+      // COMPONENT: History Panel
+      // ==========================================
+      function HistorySidebar({ history, onSelectExpression, onSelectResult, onClearHistory }) {
+        return (
+          <div id="calculator-history" className="flex flex-col h-full bg-[#1A1A19] text-[#E5E2DC] rounded-2xl p-5 border border-white/5 shadow-xl">
+            <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <HistoryIcon />
+                <h2 className="text-sm font-sans font-medium tracking-wide uppercase text-[#A0A09A]">
+                  Computation Logs
+                </h2>
+              </div>
+              {history.length > 0 && (
+                <button
+                  id="clear-history-button"
+                  onClick={() => { playTactileClick(); onClearHistory(); }}
+                  className="p-1.5 text-[#A0A09A] hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
+                  title="Clear all mathematical history"
+                >
+                  <TrashIcon />
+                </button>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1 max-h-[350px] md:max-h-[380px] no-scrollbar">
+              {history.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center py-10 opacity-60">
+                  <p className="text-xs font-mono text-[#82827C]">No historic values recorded yet.</p>
+                </div>
+              ) : (
+                history.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-white/5 group relative"
+                  >
+                    <div className="flex flex-col items-end gap-1.5">
+                      <button
+                        onClick={() => { playTactileClick(); onSelectExpression(item.expression); }}
+                        className="text-right text-[#A0A09A] hover:text-white font-mono text-xs cursor-pointer select-all truncate max-w-full text-left"
+                        title="Click to reuse expression"
+                      >
+                        {item.expression} =
+                      </button>
+                      <div className="flex items-center gap-2 justify-end w-full">
+                        <button
+                          onClick={() => { playTactileClick(); onSelectResult(item.result); }}
+                          className="text-right text-orange-400 hover:text-orange-300 font-mono text-lg font-semibold cursor-pointer select-all truncate"
+                          title="Click to copy value to display"
+                        >
+                          {item.result}
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="absolute left-2 bottom-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1">
+                      <span className="text-[9px] text-[#82827C] font-mono">Tap formula or output</span>
+                    </div>
+                    
+                    <div className="text-[9px] text-[#63635E] font-mono mt-1 text-right">
+                      {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      // ==========================================
+      // COMPONENT: Keypad Panel
+      // ==========================================
+      function Keypad({ onKeyPress, isExpressionEmpty, hasMemory }) {
+        const memoryButtons = [
+          { value: 'MC', label: 'MC', title: 'Memory Clear' },
+          { value: 'MR', label: 'MR', title: 'Memory Recall' },
+          { value: 'M+', label: 'M+', title: 'Memory Add' },
+          { value: 'M-', label: 'M-', title: 'Memory Subtract' },
+        ];
+
+        const buttonRows = [
+          [
+            { value: 'C', label: isExpressionEmpty ? 'AC' : 'C', type: 'function', title: 'Clear' },
+            { value: '(', label: '(', type: 'function', title: 'Open parenthesis' },
+            { value: ')', label: ')', type: 'function', title: 'Close parenthesis' },
+            { value: '÷', label: '÷', type: 'operator', title: 'Divide' },
+          ],
+          [
+            { value: '7', label: '7', type: 'digit' },
+            { value: '8', label: '8', type: 'digit' },
+            { value: '9', label: '9', type: 'digit' },
+            { value: '×', label: '×', type: 'operator', title: 'Multiply' },
+          ],
+          [
+            { value: '4', label: '4', type: 'digit' },
+            { value: '5', label: '5', type: 'digit' },
+            { value: '6', label: '6', type: 'digit' },
+            { value: '-', label: '−', type: 'operator', title: 'Subtract' },
+          ],
+          [
+            { value: '1', label: '1', type: 'digit' },
+            { value: '2', label: '2', type: 'digit' },
+            { value: '3', label: '3', type: 'digit' },
+            { value: '+', label: '+', type: 'operator', title: 'Add' },
+          ],
+          [
+            { value: '⌫', label: '⌫', type: 'backspace', title: 'Delete last entry' },
+            { value: '0', label: '0', type: 'digit' },
+            { value: '.', label: '.', type: 'digit' },
+            { value: '=', label: '=', type: 'equals', title: 'Evaluate expression' },
+          ],
+        ];
+
+        const getButtonStyles = (type) => {
+          switch (type) {
+            case 'operator':
+              return 'bg-[#E67E22] hover:bg-[#D35400] active:bg-[#B34500] text-white shadow-sm font-semibold text-xl';
+            case 'equals':
+              return 'bg-[#1ABC9C] hover:bg-[#16A085] active:bg-[#117A65] text-white shadow-md font-bold text-2xl';
+            case 'function':
+              return 'bg-[#DBD8D1] hover:bg-[#CBC7BF] active:bg-[#BAB6AF] text-[#4A4945] font-semibold text-lg';
+            case 'backspace':
+              return 'bg-[#DBD8D1] hover:bg-[#CBC7BF] active:bg-[#BAB6AF] text-[#4A4945] flex items-center justify-center font-semibold text-lg';
+            default:
+              return 'bg-white hover:bg-[#F2EFEA] active:bg-[#EAE5DF] text-[#2C2B29] font-medium shadow-sm border border-[#EBE8E3] text-xl';
+          }
+        };
+
+        return (
+          <div id="calculator-keypad" className="flex flex-col gap-3">
+            <div id="memory-row" className="grid grid-cols-4 gap-2 px-1">
+              {memoryButtons.map((btn) => (
+                <button
+                  key={btn.value}
+                  id={`btn-mem-${btn.value}`}
+                  onClick={() => { playTactileClick(); onKeyPress(btn.value); }}
+                  disabled={btn.value === 'MR' && !hasMemory}
+                  className={`py-2 text-[11px] font-mono font-bold tracking-wider rounded-lg transition-all duration-700 select-none ${
+                    btn.value === 'MR' && !hasMemory
+                      ? 'bg-[#E4E1DA]/40 text-[#4A4945]/40 border-dashed cursor-not-allowed'
+                      : 'bg-[#E4E1DA] hover:bg-[#D4D1CA] active:bg-[#C4C1BA] text-[#4A4945] cursor-pointer'
+                  }`}
+                  title={btn.title}
+                >
+                  {btn.label}
+                </button>
+              ))}
+            </div>
+
+            <div id="keys-grid" className="flex flex-col gap-2.5">
+              {buttonRows.map((row, rowIndex) => (
+                <div key={rowIndex} className="grid grid-cols-4 gap-2.5">
+                  {row.map((btn) => (
+                    <button
+                      key={btn.value}
+                      id={`btn-${btn.value}`}
+                      onClick={() => { playTactileClick(); onKeyPress(btn.value); }}
+                      className={`h-14 sm:h-16 rounded-xl flex items-center justify-center select-none transition-all duration-75 hover:scale-[1.01] active:scale-[0.96] cursor-pointer ${getButtonStyles(
+                        btn.type
+                      )}`}
+                      title={btn.title || `Input ${btn.label}`}
+                    >
+                      {btn.value === '⌫' ? <DeleteIcon /> : btn.label}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      // ==========================================
+      // COMPONENT: PWA/Connectivity Controller
+      // ==========================================
+      function PWAManager() {
+        const [isOnline, setIsOnline] = useState(
+          typeof navigator !== 'undefined' ? navigator.onLine : true
+        );
+        const [installPrompt, setInstallPrompt] = useState(null);
+        const [showStatusAlert, setShowStatusAlert] = useState(false);
+        const [statusMessage, setStatusMessage] = useState('');
+        const [showInstallBanner, setShowInstallBanner] = useState(true);
+
+        useEffect(() => {
+          if (typeof window === 'undefined') return;
+
+          // Standard beforeinstallprompt setup
+          const handleBeforeInstallPrompt = (e) => {
+            e.preventDefault();
+            setInstallPrompt(e);
+          };
+
+          window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+          const handleOnline = () => {
+            setIsOnline(true);
+            setStatusMessage('Network connection restored! App is fully synchronized.');
+            setShowStatusAlert(true);
+            const timer = setTimeout(() => setShowStatusAlert(false), 4000);
+            return () => clearTimeout(timer);
+          };
+
+          const handleOffline = () => {
+            setIsOnline(false);
+            setStatusMessage('Working offline. Computations persist automatically to rooms locally.');
+            setShowStatusAlert(true);
+          };
+
+          window.addEventListener('online', handleOnline);
+          window.addEventListener('offline', handleOffline);
+
+          return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+          };
+        }, []);
+
+        const handleInstallClick = async () => {
+          playTactileClick();
+          if (!installPrompt) return;
+          installPrompt.prompt();
+          const { outcome } = await installPrompt.userChoice;
+          if (outcome === 'accepted') {
+            setInstallPrompt(null);
+          }
+        };
+
+        return (
+          <div id="pwa-manager-root" className="w-full max-w-3xl mx-auto px-1 z-10 space-y-3 mb-4">
+            
+            {/* Direct alerts */}
+            {showStatusAlert && (
+              <div
+                id="network-status-alert"
+                className={`flex items-center justify-between p-3.5 rounded-xl border text-sm font-sans transition-all duration-500 ${
+                  isOnline 
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-800' 
+                    : 'bg-amber-500/10 border-amber-500/20 text-amber-800'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  {isOnline ? <WifiIcon /> : <WifiOffIcon />}
+                  <span className="font-medium tracking-tight font-sans text-xs sm:text-sm">
+                    {statusMessage}
+                  </span>
+                </div>
+                <button
+                  onClick={() => { playTactileClick(); setShowStatusAlert(false); }}
+                  className="p-1 hover:bg-black/5 rounded-lg transition-colors cursor-pointer shrink-0"
+                >
+                  <XIcon />
+                </button>
+              </div>
+            )}
+
+            {/* Custom OS-level install banner */}
+            {installPrompt && showInstallBanner && (
+              <div
+                id="pwa-install-banner"
+                className="bg-[#2D2B26] border border-[#3E3C36] rounded-2xl p-4 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg relative overflow-hidden"
+              >
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-orange-500" />
+                
+                <div className="flex items-start gap-3.5 pl-2">
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/15 flex items-center justify-center border border-orange-500/30 text-orange-400 shrink-0 mt-0.5">
+                    <MonitorIcon />
+                  </div>
+                  <div className="space-y-0.5">
+                    <h3 className="text-sm font-sans font-medium tracking-tight text-white flex items-center gap-1.5">
+                      Install Tactile Calculator
+                      <span className="text-[10px] font-mono bg-orange-500/10 text-orange-400 px-1.5 py-0.5 rounded border border-orange-500/20">Standalone App</span>
+                    </h3>
+                    <p className="text-xs text-[#A0A09A] max-w-md">
+                      Pin to application drawer or home screen for standalone layout frames, instant load speeds, and offline mechanical haptic feedback.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 pl-2 sm:pl-0 w-full sm:w-auto self-end sm:self-center">
+                  <button
+                    id="pwa-install-action"
+                    onClick={handleInstallClick}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-sans font-medium text-xs rounded-xl shadow-md cursor-pointer transition-all active:scale-[0.98]"
+                  >
+                    <DownloadIcon />
+                    <span>Install App</span>
+                  </button>
+                  <button
+                    onClick={() => { playTactileClick(); setShowInstallBanner(false); }}
+                    className="p-2 text-[#A0A09A] hover:text-white hover:bg-white/5 rounded-xl transition-colors cursor-pointer shrink-0"
+                    title="Dismiss installer banner"
+                  >
+                    <XIcon />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!isOnline && !showStatusAlert && (
+              <div id="silent-offline-indicator" className="flex items-center justify-center gap-1.5 py-1 text-amber-600 font-mono text-[10px] uppercase tracking-wider bg-amber-500/5 border border-amber-500/10 rounded-lg">
+                <WifiOffIcon />
+                <span>Calculator is executing offline</span>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      // ==========================================
+      // MASTER APPLICATION COMPONENT
+      // ==========================================
+      function App() {
+        const [expression, setExpression] = useState('');
+        const [displayValue, setDisplayValue] = useState('0');
+        const [isCalculated, setIsCalculated] = useState(false);
+        const [showHelp, setShowHelp] = useState(false);
+        const [memory, setMemory] = useState(() => {
+          const saved = localStorage.getItem('calc_memory_v1');
+          return saved ? parseFloat(saved) : 0;
+        });
+        const [history, setHistory] = useState(() => {
+          const saved = localStorage.getItem('calc_history_v1');
+          if (saved) {
+            try {
+              const parsed = JSON.parse(saved);
+              return parsed.map(item => ({
+                ...item,
+                timestamp: new Date(item.timestamp),
+              }));
+            } catch (e) {
+              return [];
+            }
+          }
+          return [];
+        });
+
+        useEffect(() => {
+          localStorage.setItem('calc_memory_v1', memory.toString());
+        }, [memory]);
+
+        useEffect(() => {
+          localStorage.setItem('calc_history_v1', JSON.stringify(history));
+        }, [history]);
+
+        const getBracketCount = useCallback(() => {
+          let count = 0;
+          for (const char of expression) {
+            if (char === '(') count++;
+            if (char === ')') count--;
+          }
+          return Math.max(0, count);
+        }, [expression]);
+
+        const handleClear = useCallback(() => {
+          setExpression('');
+          setDisplayValue('0');
+          setIsCalculated(false);
+        }, []);
+
+        const handleEvaluate = useCallback(() => {
+          if (!expression) return;
+          let finalExpression = expression;
+          const missingBracketsCount = getBracketCount();
+          for (let i = 0; i < missingBracketsCount; i++) {
+            finalExpression += ')';
+          }
+
+          try {
+            const resultValue = evaluateExpression(finalExpression);
+            const cleanResult = formatResult(resultValue);
+            
+            setDisplayValue(cleanResult);
+            
+            const newHistoryItem = {
+              id: crypto.randomUUID(),
+              expression: finalExpression,
+              result: cleanResult,
+              timestamp: new Date()
+            };
+            
+            setHistory(prev => [newHistoryItem, ...prev].slice(0, 50));
+            setExpression(cleanResult);
+            setIsCalculated(true);
+          } catch (err) {
+            setDisplayValue(err?.message || 'Error');
+            setIsCalculated(true);
+          }
+        }, [expression, getBracketCount]);
+
+        const handleKeyPress = useCallback((val) => {
+          if (val === 'C' || val === 'AC') {
+            handleClear();
+            return;
+          }
+
+          if (val === '=') {
+            handleEvaluate();
+            return;
+          }
+
+          if (val === '⌫') {
+            if (isCalculated) {
+              handleClear();
+              return;
+            }
+            if (expression.length > 0) {
+              const nextExpr = expression.slice(0, -1);
+              setExpression(nextExpr);
+              const tokens = nextExpr.split(/[\+\-\*\/×÷\(\)]/);
+              const lastToken = tokens[tokens.length - 1];
+              setDisplayValue(lastToken || '0');
+            } else {
+              setDisplayValue('0');
+            }
+            return;
+          }
+
+          if (['MC', 'MR', 'M+', 'M-'].includes(val)) {
+            const parsedDisplay = parseFloat(displayValue);
+            const currentNumber = isNaN(parsedDisplay) ? 0 : parsedDisplay;
+
+            switch (val) {
+              case 'MC':
+                setMemory(0);
+                break;
+              case 'MR':
+                setDisplayValue(memory.toString());
+                if (isCalculated) {
+                  setExpression(memory.toString());
+                  setIsCalculated(false);
+                } else {
+                  setExpression(expression + memory.toString());
+                }
+                break;
+              case 'M+':
+                setMemory(prev => prev + currentNumber);
+                break;
+              case 'M-':
+                setMemory(prev => prev - currentNumber);
+                break;
+            }
+            return;
+          }
+
+          if (val === '(' || val === ')') {
+            if (val === ')' && getBracketCount() === 0) return;
+
+            let nextExpression = expression;
+            if (isCalculated) {
+              nextExpression = val;
+              setIsCalculated(false);
+            } else {
+              nextExpression += val;
+            }
+
+            setExpression(nextExpression);
+            setDisplayValue(val);
+            return;
+          }
+
+          const normalizedOperator = val === '*' ? '×' : val === '/' ? '÷' : val;
+          const isOperator = ['+', '-', '×', '÷'].includes(normalizedOperator);
+
+          if (isOperator) {
+            if (expression === '' && normalizedOperator !== '-') {
+              return;
+            }
+
+            let updatedExpression = expression;
+            const lastChar = expression.slice(-1);
+            const isLastCharOperator = ['+', '-', '×', '÷'].includes(lastChar);
+
+            if (isLastCharOperator) {
+              updatedExpression = expression.slice(0, -1) + normalizedOperator;
+            } else {
+              updatedExpression += normalizedOperator;
+            }
+
+            setExpression(updatedExpression);
+            setIsCalculated(false);
+            return;
+          }
+
+          if (/[0-9.]/.test(val)) {
+            let nextExpression = expression;
+            let nextDisplay = displayValue;
+
+            if (isCalculated) {
+              nextExpression = val === '.' ? '0.' : val;
+              nextDisplay = nextExpression;
+              setIsCalculated(false);
+            } else {
+              const tokens = expression.split(/[+\-×÷()]/);
+              const currentToken = tokens[tokens.length - 1] || '';
+
+              if (val === '.') {
+                if (currentToken.includes('.')) return;
+                
+                if (currentToken === '') {
+                  nextExpression += '0.';
+                  nextDisplay = '0.';
+                } else {
+                  nextExpression += '.';
+                  nextDisplay = currentToken + '.';
+                }
+              } else {
+                nextExpression += val;
+                nextDisplay = currentToken === '0' ? val : currentToken + val;
+              }
+            }
+
+            setExpression(nextExpression);
+            setDisplayValue(nextDisplay);
+          }
+        }, [expression, displayValue, isCalculated, memory, handleClear, handleEvaluate, getBracketCount]);
+
+        useEffect(() => {
+          const handleKeyDown = (e) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+              return;
+            }
+
+            const key = e.key;
+
+            if (key >= '0' && key <= '9') {
+              handleKeyPress(key);
+            } else if (key === '.') {
+              handleKeyPress('.');
+            } else if (key === '+') {
+              handleKeyPress('+');
+            } else if (key === '-') {
+              handleKeyPress('-');
+            } else if (key === '*' || key === 'x' || key === 'X') {
+              handleKeyPress('×');
+            } else if (key === '/') {
+              e.preventDefault();
+              handleKeyPress('÷');
+            } else if (key === '(') {
+              handleKeyPress('(');
+            } else if (key === ')') {
+              handleKeyPress(')');
+            } else if (key === '=' || key === 'Enter') {
+              e.preventDefault();
+              handleKeyPress('=');
+            } else if (key === 'Backspace') {
+              handleKeyPress('⌫');
+            } else if (key === 'Escape' || key === 'c' || key === 'C') {
+              handleKeyPress('C');
+            }
+          };
+
+          window.addEventListener('keydown', handleKeyDown);
+          return () => window.removeEventListener('keydown', handleKeyDown);
+        }, [handleKeyPress]);
+
+        const pasteExpression = (expr) => {
+          setExpression(expr);
+          setIsCalculated(false);
+        };
+
+        const pasteResult = (res) => {
+          setDisplayValue(res);
+          setExpression(prev => {
+            const lastChar = prev.slice(-1);
+            const isLastCharDigitOrDot = /[0-9.]/.test(lastChar);
+            if (isLastCharDigitOrDot || prev === '') {
+              return res;
+            } else {
+              return prev + res;
+            }
+          });
+          setIsCalculated(false);
+        };
+
+        return (
+          <div className="min-h-screen bg-[#FDFCF7] text-[#1C1A17] selection:bg-orange-200 py-8 px-4 flex flex-col justify-between font-sans">
+            <h1 className="sr-only">Tactile Premium Calculator</h1>
+
+            <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col items-center justify-center">
+              
+              <div className="w-full max-w-3xl flex items-center justify-between mb-6 px-1">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center border border-orange-500/20 text-orange-500">
+                    <CalculatorIcon />
+                  </div>
+                  <div>
+                    <span className="text-xs uppercase font-mono tracking-widest text-[#85827C]">Craftsmanship Series</span>
+                    <div className="text-base font-medium text-[#1A1A19] tracking-tight">Tactile Calculator</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { playTactileClick(); setShowHelp(prev => !prev); }}
+                    className="p-2 text-[#85827C] hover:text-[#1A1A19] hover:bg-black/5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-xs font-medium font-mono"
+                    title="Show keyboard shortcuts help panel"
+                  >
+                    <KeyboardIcon />
+                    <span>Shortcuts</span>
+                  </button>
+                </div>
+              </div>
+
+              <PWAManager />
+
+              <div className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+                
+                <div className="md:col-span-7 flex flex-col">
+                  <div className="bg-[#ECE9E2] border border-[#DBD7CE] rounded-3xl p-6 shadow-[0_12px_40px_-12px_rgba(40,40,30,0.15)] flex flex-col justify-between relative h-full">
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4/5 h-[1.5px] bg-white/40 blur-[0.5px]" />
+                    
+                    <div>
+                      <Display 
+                        expression={expression}
+                        displayValue={displayValue}
+                        hasMemory={memory !== 0}
+                        bracketCount={getBracketCount()}
+                      />
+
+                      <Keypad 
+                        onKeyPress={handleKeyPress}
+                        isExpressionEmpty={expression === ''}
+                        hasMemory={memory !== 0}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="md:col-span-5 h-full">
+                  <HistorySidebar 
+                    history={history}
+                    onSelectExpression={pasteExpression}
+                    onSelectResult={pasteResult}
+                    onClearHistory={() => setHistory([])}
+                  />
+                </div>
+
+              </div>
+
+              {showHelp && (
+                <div className="w-full max-w-3xl mt-5 overflow-hidden transition-all duration-300">
+                  <div className="p-4 bg-[#F2F0E8] border border-[#DDDCD5] rounded-2xl text-xs text-[#52514D]">
+                    <div className="flex items-center gap-2 mb-2 font-semibold font-sans uppercase tracking-wider text-[#353431]">
+                      <HelpCircleIcon />
+                      <span>Physical Keyboard Controls</span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 font-mono">
+                      <div className="p-2.5 bg-white/50 rounded-lg"><kbd className="bg-white px-1.5 py-0.5 rounded border border-gray-300 shadow-xs mr-1 text-[11px] font-bold">0-9</kbd> Digit Input</div>
+                      <div className="p-2.5 bg-white/50 rounded-lg"><kbd className="bg-white px-1.5 py-0.5 rounded border border-gray-300 shadow-xs mr-1 text-[11px] font-bold">Enter</kbd> / <kbd className="bg-white px-1.5 py-0.5 rounded border border-gray-300 shadow-xs text-[11px] font-bold">=</kbd> Solve</div>
+                      <div className="p-2.5 bg-white/50 rounded-lg"><kbd className="bg-white px-1.5 py-0.5 rounded border border-gray-300 shadow-xs mr-1 text-[11px] font-bold">Backspace</kbd> Erase</div>
+                      <div className="p-2.5 bg-white/50 rounded-lg"><kbd className="bg-white px-1.5 py-0.5 rounded border border-gray-300 shadow-xs mr-1 text-[11px] font-bold">Esc / C</kbd> Reset State</div>
+                      <div className="p-2.5 bg-white/50 rounded-lg"><kbd className="bg-white px-1.5 py-0.5 rounded border border-gray-300 shadow-xs mr-1 text-[11px] font-bold">+</kbd> Addition</div>
+                      <div className="p-2.5 bg-white/50 rounded-lg"><kbd className="bg-white px-1.5 py-0.5 rounded border border-gray-300 shadow-xs mr-1 text-[11px] font-bold">-</kbd> Subtraction</div>
+                      <div className="p-2.5 bg-white/50 rounded-lg"><kbd className="bg-white px-1.5 py-0.5 rounded border border-gray-300 shadow-xs mr-1 text-[11px] font-bold">* / x</kbd> Multiplication</div>
+                      <div className="p-2.5 bg-white/50 rounded-lg"><kbd className="bg-white px-1.5 py-0.5 rounded border border-gray-300 shadow-xs mr-1 text-[11px] font-bold">/</kbd> Division</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            <footer className="mt-8 text-center text-[10px] font-mono tracking-wider text-[#A19E97]">
+              Designed for precision and accessibility · Offline Supported · Press Esc to Clear any time
+            </footer>
+          </div>
+        );
+      }
+
+      // Render Dashboard Applet
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
   </body>
 </html>
-
